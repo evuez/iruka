@@ -3,7 +3,6 @@ module Main exposing (Model, Msg(..), init, main, update, view)
 import Array exposing (Array)
 import Browser
 import Browser.Navigation as Nav
-import Debug
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, href, id)
 import Html.Events exposing (onClick)
@@ -16,10 +15,7 @@ import Url.Parser as P exposing ((<?>))
 import Url.Parser.Query as Q
 
 
-
--- main : Program (Maybe OwnerRecord) Model Msg
-
-
+main : Program Flags Model Msg
 main =
     Browser.application
         { init = init
@@ -31,17 +27,21 @@ main =
         }
 
 
-init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
-init _ url key =
-    update (UrlChanged url) { cards = Array.fromList [], card = Nothing, flipped = False }
+init : Flags -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init flags url key =
+    update (UrlChanged url) { flags = flags, cards = Array.fromList [], card = Nothing, flipped = False }
 
 
 
 -- MODEL
 
 
+type alias Flags =
+    { basePath : String }
+
+
 type alias Model =
-    { cards : Array Card, card : Maybe Card, flipped : Bool }
+    { flags : Flags, cards : Array Card, card : Maybe Card, flipped : Bool }
 
 
 type alias Card =
@@ -68,7 +68,7 @@ type Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update msg ({ flags } as model) =
     case msg of
         UrlRequested req ->
             case req of
@@ -79,7 +79,7 @@ update msg model =
                     ( model, Nav.load href )
 
         UrlChanged url ->
-            case P.parse route url of
+            case P.parse route (fixUrl flags.basePath url) of
                 Just (Set (Just setUrl)) ->
                     ( model, Cmd.batch [ getCards setUrl ] )
 
@@ -111,7 +111,7 @@ update msg model =
 
 view : Model -> Browser.Document Msg
 view model =
-    { title = "okil", body = [ cardsView model ] }
+    { title = "iruka", body = [ cardsView model ] }
 
 
 cardsView : Model -> Html Msg
@@ -168,6 +168,11 @@ type Route
 route : P.Parser (Route -> a) a
 route =
     P.oneOf [ P.map Set (P.top <?> Q.string "set") ]
+
+
+fixUrl : String -> Url -> Url
+fixUrl basePath ({ path } as r) =
+    { r | path = String.replace basePath "/" path }
 
 
 

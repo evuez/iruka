@@ -1,0 +1,72 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 0145fbc706d33ea86be6db1a7c7e3b736cecd89817a8fb1405cfde9e369d1b85
+
+name:           iruka
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/evuez/iruka#readme>
+homepage:       https://github.com/evuez/iruka#readme
+bug-reports:    https://github.com/evuez/iruka/issues
+author:         evuez
+maintainer:     helloevuez@gmail.com
+copyright:      2020 evuez
+license:        BSD3
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/evuez/iruka
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_iruka
+  hs-source-dirs:
+      src
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , megaparsec
+    , parser-combinators
+  default-language: Haskell2010
+
+executable iruka-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_iruka
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , iruka
+    , megaparsec
+    , parser-combinators
+  default-language: Haskell2010
+
+test-suite iruka-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_iruka
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , hspec
+    , hspec-megaparsec
+    , iruka
+    , megaparsec
+    , parser-combinators
+  default-language: Haskell2010

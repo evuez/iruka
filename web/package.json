@@ -1,4 +1,5 @@
 {
+  "license": "BSD-3-Clause",
   "dependencies": {
     "elm-webpack-loader": "^5.0.0",
     "webpack": "^4.38.0",

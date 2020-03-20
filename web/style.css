@@ -23,7 +23,8 @@ body {
 }
 
 main {
-  padding: 20px;
+  border-top: 20px solid var(--color-primary);
+  padding: 0 20px 20px 20px;
   width: 100vw;
   height: 100vh;
 }

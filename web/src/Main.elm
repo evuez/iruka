@@ -4,7 +4,7 @@ import Array exposing (Array)
 import Browser
 import Browser.Navigation as Nav
 import Html exposing (..)
-import Html.Attributes exposing (class, classList, href, id)
+import Html.Attributes exposing (class, classList, href, id, style)
 import Html.Events exposing (onClick)
 import Http
 import Json.Decode as D
@@ -118,7 +118,7 @@ cardsView : Model -> Html Msg
 cardsView model =
     case model.card of
         Just c ->
-            main_ []
+            main_ [ style "border-color" (Maybe.withDefault "" c.color) ]
                 [ div [ class "front", classList [ ( "hidden", model.flipped ) ] ]
                     [ h1 [ onClick Flip, class "term" ] [ text c.term ]
                     , nav [ class "tags" ] (List.map (\x -> span [ class "label" ] [ text x ]) c.tags)

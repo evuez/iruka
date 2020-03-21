@@ -2,7 +2,7 @@ app.js: index.js package.json src/*.elm
 	yarn build
 
 .PHONY: start
-.start:
+start:
 	yarn start
 
 .PHONY: format

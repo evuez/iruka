@@ -50,23 +50,25 @@ a.label { cursor: pointer; }
 .front > * + *, .back > * + * {
   margin-top: 24px;
 }
-.front > :first-child, .back > :first-child {
+
+.wrapper {
+  width: 100%;
   display: flex;
   justify-content: center;
+  align-items: center;
   flex-direction: column;
   flex-grow: 1;
+  cursor: pointer;
 }
 
-.front > .term {
+.front .term {
   font-weight: normal;
-  cursor: pointer;
   font-size: 2rem;
   color: var(--color-accent);
   text-align: center;
 }
 
-.back > .definition {
-  cursor: pointer;
+.back .definition {
   color: var(--color-accent-2);
   font-family: inherit;
   white-space: pre-wrap;

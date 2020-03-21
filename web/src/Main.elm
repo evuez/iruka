@@ -119,20 +119,24 @@ cardsView model =
     case model.card of
         Just c ->
             main_ [ style "border-color" (Maybe.withDefault "" c.color) ]
-                [ div [ class "front", classList [ ( "hidden", model.flipped ) ] ]
-                    [ h1 [ onClick Flip, class "term" ] [ text c.term ]
-                    , nav [ class "tags" ] (List.map (\x -> span [ class "label" ] [ text x ]) c.tags)
-                    ]
-                , div [ class "back", classList [ ( "hidden", not model.flipped ) ] ] (backView c)
+                [ section [ class "front", classList [ ( "hidden", model.flipped ) ] ] (frontView c)
+                , section [ class "back", classList [ ( "hidden", not model.flipped ) ] ] (backView c)
                 ]
 
         Nothing ->
-            main_ [] [ div [ class "error" ] [ h1 [] [ text "Error" ], p [] [ text "No card found." ] ] ]
+            main_ [] [ section [ class "error" ] [ h1 [] [ text "Error" ], p [] [ text "No card found." ] ] ]
+
+
+frontView : Card -> List (Html Msg)
+frontView { term, tags } =
+    [ div [ onClick Flip, class "wrapper" ] [ h1 [ class "term" ] [ text term ] ]
+    , nav [ class "tags" ] (List.map (\x -> span [ class "label" ] [ text x ]) tags)
+    ]
 
 
 backView : Card -> List (Html Msg)
 backView { definition, image, link } =
-    [ div [ onClick Next, class "definition" ] (showDefinition definition)
+    [ div [ onClick Next, class "wrapper" ] [ article [ class "definition" ] (showDefinition definition) ]
     , nav []
         (List.filterMap identity
             [ Maybe.map (showExtra "image") image

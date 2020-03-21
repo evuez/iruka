@@ -12,7 +12,7 @@ install:
 .PHONY: format
 format:
 	stylish-haskell --inplace $(SOURCES)
-	$(MAKE) format -C web
+	$(MAKE) -C web format
 
 .PHONY: test
 test:
@@ -21,3 +21,7 @@ test:
 .PHONY: test.watch
 test.watch:
 	stack test --test --file-watch --fast
+
+.PHONY: start
+start:
+	$(MAKE) -C web start

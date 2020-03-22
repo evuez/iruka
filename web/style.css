@@ -38,7 +38,18 @@ main {
 .label + .label { margin-left: 4px; }
 a.label { cursor: pointer; }
 
+.wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  flex-grow: 1;
+  cursor: pointer;
+}
+
 .front, .back, .error {
+  background-color: var(--color-primary);
   width: 100%;
   height: 100%;
   display: flex;
@@ -51,14 +62,20 @@ a.label { cursor: pointer; }
   margin-top: 24px;
 }
 
-.wrapper {
-  width: 100%;
+.front[data-emoji]:not([data-emoji=""])::before {
+  position: absolute;
   display: flex;
   justify-content: center;
   align-items: center;
-  flex-direction: column;
-  flex-grow: 1;
-  cursor: pointer;
+  z-index: 1;
+  content: attr(data-emoji);
+  width: 100%;
+  top: 0;
+  bottom: 0;
+  padding-top: 20px;
+  padding-bottom: 76px;
+  background-color: var(--color-primary);
+  animation: .6s ease-in forwards pop;
 }
 
 .front .term {
@@ -82,4 +99,11 @@ a.label { cursor: pointer; }
 }
 .definition ul > li::before {
   content: '- ';
+}
+
+@keyframes pop {
+  from { font-size: 1rem; }
+  20% { font-size: 4rem; }
+  99% { font-size: 4rem; }
+  to { z-index: -1; }
 }

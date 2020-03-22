@@ -21,5 +21,11 @@ module.exports = merge(common, {
     ],
 
     noParse: /\.elm$/,
+  },
+
+  devServer: {
+    inline: true,
+    stats: { colors: true },
+    host: '0.0.0.0'
   }
 });

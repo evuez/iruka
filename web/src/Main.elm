@@ -4,12 +4,13 @@ import Array exposing (Array)
 import Browser
 import Browser.Navigation as Nav
 import Html exposing (..)
-import Html.Attributes exposing (class, classList, href, id, style)
+import Html.Attributes exposing (attribute, class, classList, href, id, style)
 import Html.Events exposing (onClick)
 import Http
 import Json.Decode as D
 import Markdown
 import Random
+import Swipe exposing (onSwipe)
 import Url exposing (Url)
 import Url.Parser as P exposing ((<?>))
 import Url.Parser.Query as Q
@@ -29,7 +30,14 @@ main =
 
 init : Flags -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
-    update (UrlChanged url) { flags = flags, cards = Array.fromList [], card = Nothing, flipped = False }
+    update (UrlChanged url)
+        { flags = flags
+        , swipe = Swipe.init
+        , cards = Array.fromList []
+        , card = Nothing
+        , flipped = False
+        , emoji = ""
+        }
 
 
 
@@ -41,7 +49,7 @@ type alias Flags =
 
 
 type alias Model =
-    { flags : Flags, cards : Array Card, card : Maybe Card, flipped : Bool }
+    { flags : Flags, swipe : Swipe.State, cards : Array Card, card : Maybe Card, flipped : Bool, emoji : String }
 
 
 type alias Card =
@@ -64,7 +72,7 @@ type Msg
     | GotCards (Result Http.Error (Array Card))
     | GotCard (Maybe Card)
     | Flip
-    | Next
+    | Swipe Swipe.Event
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -101,8 +109,16 @@ update msg ({ flags } as model) =
         Flip ->
             ( { model | flipped = True }, Cmd.none )
 
-        Next ->
-            ( model, Cmd.batch [ pickCard model.cards ] )
+        Swipe e ->
+            case Swipe.direction e model.swipe of
+                ( swipe_, Just Swipe.Up ) ->
+                    ( { model | swipe = swipe_, emoji = "🧙" }, Cmd.batch [ pickCard model.cards ] )
+
+                ( swipe_, Just Swipe.Down ) ->
+                    ( { model | swipe = swipe_, emoji = "🧟" }, Cmd.batch [ pickCard model.cards ] )
+
+                ( swipe_, _ ) ->
+                    ( { model | swipe = swipe_ }, Cmd.none )
 
 
 
@@ -119,7 +135,12 @@ cardsView model =
     case model.card of
         Just c ->
             main_ [ style "border-color" (Maybe.withDefault "" c.color) ]
-                [ section [ class "front", classList [ ( "hidden", model.flipped ) ] ] (frontView c)
+                [ section
+                    [ class "front"
+                    , classList [ ( "hidden", model.flipped ) ]
+                    , attribute "data-emoji" model.emoji
+                    ]
+                    (frontView c)
                 , section [ class "back", classList [ ( "hidden", not model.flipped ) ] ] (backView c)
                 ]
 
@@ -136,7 +157,7 @@ frontView { term, tags } =
 
 backView : Card -> List (Html Msg)
 backView { definition, image, link } =
-    [ div [ onClick Next, class "wrapper" ] [ article [ class "definition" ] (showDefinition definition) ]
+    [ div (class "wrapper" :: onSwipe Swipe) [ article [ class "definition" ] (showDefinition definition) ]
     , nav []
         (List.filterMap identity
             [ Maybe.map (showExtra "image") image

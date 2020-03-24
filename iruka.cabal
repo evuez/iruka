@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0145fbc706d33ea86be6db1a7c7e3b736cecd89817a8fb1405cfde9e369d1b85
+-- hash: d7b94adf97b06b1623bc8e38fa9d7d59b709fe6cd42bdcb5160a3a36fa1fe234
 
 name:           iruka
 version:        0.1.0.0
@@ -15,6 +15,7 @@ author:         evuez
 maintainer:     helloevuez@gmail.com
 copyright:      2020 evuez
 license:        BSD3
+license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     README.md

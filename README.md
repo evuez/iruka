@@ -10,6 +10,8 @@ A file format for flashcards accompanied with a parser and a small web applicati
 
 ## Application
 
+---
+
 ## Formatting
 
 ```

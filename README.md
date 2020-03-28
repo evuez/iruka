@@ -2,6 +2,14 @@
 
 # iruka
 
+A file format for flashcards accompanied with a parser and a small web application.
+
+## File format
+
+## Parser
+
+## Application
+
 ## Formatting
 
 ```

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d7b94adf97b06b1623bc8e38fa9d7d59b709fe6cd42bdcb5160a3a36fa1fe234
+-- hash: 57790d16e7536206aee97d35e4b2363695eae2f572ab8704f51041595f3e384e
 
 name:           iruka
 version:        0.1.0.0
@@ -39,7 +39,7 @@ library
     , parser-combinators
   default-language: Haskell2010
 
-executable iruka-exe
+executable iruka
   main-is: Main.hs
   other-modules:
       Paths_iruka

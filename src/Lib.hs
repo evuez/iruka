@@ -13,13 +13,22 @@ import Data.Aeson (ToJSON(..), (.=))
 import qualified Data.Aeson as A (object)
 import Data.Bifunctor (first)
 import Data.Void (Void)
-import Text.Megaparsec (parse)
 import Text.Megaparsec
-  (Parsec, between, eof, many, manyTill, sepBy, some, takeWhile1P, try, (<?>))
+  ( Parsec
+  , between
+  , eof
+  , many
+  , manyTill
+  , parse
+  , sepBy
+  , some
+  , takeWhile1P
+  , try
+  , (<?>)
+  )
 import qualified Text.Megaparsec.Char as C (char, eol, space1, string)
 import qualified Text.Megaparsec.Char.Lexer as L (charLiteral, space, symbol)
-import Text.Megaparsec.Error (errorBundlePretty)
-import Text.Megaparsec.Error (ParseErrorBundle)
+import Text.Megaparsec.Error (ParseErrorBundle, errorBundlePretty)
 
 type Parser = Parsec Void String
 
@@ -93,7 +102,7 @@ parseLink = C.string "link: " *> string <* C.eol
 parseDefinition :: Parser Definition
 parseDefinition =
   d *> C.eol *>
-  ((d *> C.string "") <|> (L.charLiteral `manyTill` (try $ C.eol *> d)))
+  ((d *> C.string "") <|> (L.charLiteral `manyTill` try (C.eol *> d)))
   where
     d = C.string "---"
 

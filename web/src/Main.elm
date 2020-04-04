@@ -1,14 +1,16 @@
 module Main exposing (Model, Msg(..), init, main, update, view)
 
-import Array exposing (Array)
 import Browser
 import Browser.Navigation as Nav
+import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (attribute, class, classList, href, id, style)
 import Html.Events exposing (onClick)
 import Http
 import Json.Decode as D
+import Json.Encode as E
 import Markdown
+import Ports
 import Random
 import Swipe exposing (onSwipe)
 import Url exposing (Url)
@@ -33,7 +35,7 @@ init flags url key =
     update (UrlChanged url)
         { flags = flags
         , swipe = Swipe.init
-        , cards = Array.fromList []
+        , cards = []
         , card = Nothing
         , flipped = False
         , emoji = ""
@@ -45,11 +47,11 @@ init flags url key =
 
 
 type alias Flags =
-    { basePath : String }
+    { basePath : String, scores : List ( String, Float ) }
 
 
 type alias Model =
-    { flags : Flags, swipe : Swipe.State, cards : Array Card, card : Maybe Card, flipped : Bool, emoji : String }
+    { flags : Flags, swipe : Swipe.State, cards : List Card, card : Maybe Card, flipped : Bool, emoji : String }
 
 
 type alias Card =
@@ -59,7 +61,13 @@ type alias Card =
     , image : Maybe String
     , color : Maybe String
     , link : Maybe String
+    , score : Float
     }
+
+
+type Reaction
+    = Yay
+    | Nay
 
 
 
@@ -69,7 +77,7 @@ type alias Card =
 type Msg
     = UrlRequested Browser.UrlRequest
     | UrlChanged Url.Url
-    | GotCards (Result Http.Error (Array Card))
+    | GotCards (Result Http.Error (List Card))
     | GotCard (Maybe Card)
     | Flip
     | Swipe Swipe.Event
@@ -89,13 +97,17 @@ update msg ({ flags } as model) =
         UrlChanged url ->
             case P.parse route (fixUrl flags.basePath url) of
                 Just (Set (Just setUrl)) ->
-                    ( model, Cmd.batch [ getCards setUrl ] )
+                    ( model, getCards setUrl )
 
                 _ ->
                     ( model, Cmd.none )
 
         GotCards (Ok cards) ->
-            ( { model | cards = cards }, Cmd.batch [ pickCard cards ] )
+            let
+                cards_ =
+                    mergeWeights cards flags.scores
+            in
+            ( { model | cards = cards_ }, Cmd.batch [ pickCard cards_, saveScores cards_ ] )
 
         GotCards (Err _) ->
             ( model, Cmd.none )
@@ -110,14 +122,31 @@ update msg ({ flags } as model) =
             ( { model | flipped = True }, Cmd.none )
 
         Swipe e ->
-            case Swipe.direction e model.swipe of
-                ( swipe_, Just Swipe.Up ) ->
-                    ( { model | swipe = swipe_, emoji = "🧙" }, Cmd.batch [ pickCard model.cards ] )
+            let
+                ( swipe_, reaction ) =
+                    case Swipe.direction e model.swipe of
+                        ( s, Just Swipe.Up ) ->
+                            ( s, Just Yay )
 
-                ( swipe_, Just Swipe.Down ) ->
-                    ( { model | swipe = swipe_, emoji = "🧟" }, Cmd.batch [ pickCard model.cards ] )
+                        ( s, Just Swipe.Down ) ->
+                            ( s, Just Nay )
 
-                ( swipe_, _ ) ->
+                        ( s, _ ) ->
+                            ( s, Nothing )
+
+                cards_ =
+                    case reaction of
+                        Just reaction_ ->
+                            updateScore model.cards model.card (getScore reaction_)
+
+                        Nothing ->
+                            model.cards
+            in
+            case reaction of
+                Just reaction_ ->
+                    ( { model | swipe = swipe_, emoji = getEmoji reaction_, cards = cards_ }, Cmd.batch [ pickCard cards_, saveScores cards_ ] )
+
+                Nothing ->
                     ( { model | swipe = swipe_ }, Cmd.none )
 
 
@@ -149,7 +178,7 @@ cardsView model =
 
 
 frontView : Card -> List (Html Msg)
-frontView { term, tags } =
+frontView { term, tags, score } =
     [ div [ onClick Flip, class "wrapper" ] [ h1 [ class "term" ] [ text term ] ]
     , nav [ class "tags" ] (List.map (\x -> span [ class "label" ] [ text x ]) tags)
     ]
@@ -210,34 +239,140 @@ getCards url =
 
 
 
--- DECODERS
+-- CODECS
+
+
+scoreEncoder : Card -> E.Value
+scoreEncoder c =
+    E.list identity [ E.float c.score, E.string (cardKey c) ]
+
+
+scoresEncoder : List Card -> E.Value
+scoresEncoder cards =
+    E.list scoreEncoder cards
 
 
 cardDecoder : D.Decoder Card
 cardDecoder =
-    D.map6 Card
+    D.map7 Card
         (D.field "term" D.string)
         (D.field "definition" D.string)
         (D.field "tags" (D.list D.string))
         (D.field "image" (D.nullable D.string))
         (D.field "color" (D.nullable D.string))
         (D.field "link" (D.nullable D.string))
+        (D.succeed 9)
 
 
-cardsDecoder : D.Decoder (Array Card)
+cardsDecoder : D.Decoder (List Card)
 cardsDecoder =
-    D.array cardDecoder
+    D.list cardDecoder
 
 
 
 -- HELPERS
 
 
-pickCard : Array Card -> Cmd Msg
+pickCard : List Card -> Cmd Msg
 pickCard cs =
-    Random.generate GotCard (randomElem cs)
+    Random.generate GotCard (randGen cs)
 
 
-randomElem : Array a -> Random.Generator (Maybe a)
-randomElem xs =
-    Random.map (\i -> Array.get i xs) (Random.int 0 (Array.length xs - 1))
+randGen : List Card -> Random.Generator (Maybe Card)
+randGen xs =
+    Random.weighted (maybeCardToWeight <| List.head xs) (maybeCardsToWeight <| List.tail xs)
+
+
+maybeCardToWeight : Maybe Card -> ( Float, Maybe Card )
+maybeCardToWeight c =
+    case c of
+        Just card ->
+            cardToWeight card
+
+        Nothing ->
+            ( 9, Nothing )
+
+
+cardToWeight : Card -> ( Float, Maybe Card )
+cardToWeight c =
+    ( 10 - c.score, Just c )
+
+
+maybeCardsToWeight : Maybe (List Card) -> List ( Float, Maybe Card )
+maybeCardsToWeight cs =
+    case cs of
+        Just cards ->
+            List.map cardToWeight cards
+
+        Nothing ->
+            []
+
+
+cardKey : Card -> String
+cardKey { term, tags } =
+    String.concat [ term, "|", String.join "," <| List.sort tags ]
+
+
+mergeWeights : List Card -> List ( String, Float ) -> List Card
+mergeWeights cards scores =
+    List.map (\c -> { c | score = Maybe.withDefault 9 (findScore scores c) }) cards
+
+
+findScore : List ( String, Float ) -> Card -> Maybe Float
+findScore scores card =
+    let
+        key =
+            cardKey card
+    in
+    List.head <| List.filterMap (scoreOrNothing key) scores
+
+
+scoreOrNothing : String -> ( String, Float ) -> Maybe Float
+scoreOrNothing key ( k, score ) =
+    if key == k then
+        Just score
+
+    else
+        Nothing
+
+
+getScore : Reaction -> Float
+getScore r =
+    case r of
+        Yay ->
+            1
+
+        Nay ->
+            -1
+
+
+getEmoji : Reaction -> String
+getEmoji r =
+    case r of
+      Yay ->
+        "🧙"
+      Nay ->
+        "🧟"
+
+
+updateScore : List Card -> Maybe Card -> Float -> List Card
+updateScore cards card val =
+    case card of
+        Just card_ ->
+            List.map
+                (\c ->
+                    if c == card_ && c.score + val > 0 && c.score + val < 10 then
+                        { c | score = c.score + val }
+
+                    else
+                        c
+                )
+                cards
+
+        Nothing ->
+            cards
+
+
+saveScores : List Card -> Cmd Msg
+saveScores cards =
+    Ports.saveScores (scoresEncoder cards)

@@ -1,0 +1,109 @@
+/* https://colorhunt.co/palette/12081 */
+/* https://colorhunt.co/palette/2763 */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  font-size: 24px;
+
+  --color-black: #050505;
+  --color-primary: #3e4149;
+  --color-primary-2: #444f5a;
+  --color-accent: #ff9999;
+  --color-accent-2: #ffc8c8;
+}
+
+body {
+  font-family: 'Crimson Text', sans-serif;
+  background-color: var(--color-primary);
+}
+
+main {
+  border-top: 20px solid var(--color-primary);
+  padding: 0 20px 20px 20px;
+  width: 100vw;
+  height: 100vh;
+}
+
+.label {
+  background-color: var(--color-black);
+  color: var(--color-primary-2);
+  padding: 0 4px;
+  text-decoration: none;
+}
+.label + .label { margin-left: 4px; }
+a.label { cursor: pointer; }
+
+.wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  flex-grow: 1;
+  cursor: pointer;
+}
+
+.front, .back, .error {
+  background-color: var(--color-primary);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+.front.hidden, .back.hidden { display: none; }
+.front > * + *, .back > * + * {
+  margin-top: 24px;
+}
+
+.front[data-emoji]:not([data-emoji=""])::before {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+  content: attr(data-emoji);
+  width: 100%;
+  top: 0;
+  bottom: 0;
+  padding-top: 20px;
+  padding-bottom: 76px;
+  background-color: var(--color-primary);
+  animation: .6s ease-in forwards pop;
+}
+
+.front .term {
+  font-weight: normal;
+  font-size: 2rem;
+  color: var(--color-accent);
+  text-align: center;
+}
+
+.back .definition {
+  color: var(--color-accent-2);
+  font-family: inherit;
+  white-space: pre-wrap;
+}
+
+.definition ol, .definition ul {
+  list-style-position: inside;
+}
+.definition ul > li {
+  list-style: none;
+}
+.definition ul > li::before {
+  content: '- ';
+}
+
+@keyframes pop {
+  from { font-size: 1rem; }
+  20% { font-size: 4rem; }
+  99% { font-size: 4rem; }
+  to { z-index: -1; }
+}
